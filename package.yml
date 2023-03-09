@@ -39,7 +39,7 @@ global_vars:
   - name: "PYTHON_ENV"
     type: "shell"
     params:
-      cmd: "echo ~/.virtualenvs/web3new/bin/python"
+      cmd: "echo ~/.virtualenvs/openai/bin/python3"
 
 matches:
   - trigger: ";test-setup"
