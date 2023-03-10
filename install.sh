@@ -84,7 +84,7 @@ python_path=$(which python3)
 
 # Replace the PYTHON_ENV line in the package.yml with the new path
 default_path="~/.virtualenvs/openai/bin/python3"
-sed -i '' "s|$old_path|$new_path|g" "$dest_dir/$espanso"
+sed -i '' "s|$default_path|$python_path|g" "$dest_dir/$espanso"
 
 # restart espanso
 espanso restart
