@@ -58,7 +58,7 @@ db_file = ~/openai_chatgpt/chats.db
 EOF
 
 # Create an Espanso package called openai
-mkdir $CONFIG/match/packages/openai
+mkdir $ESPANSO_CONFIG_PATH/match/packages/openai
 
 # Repo url
 url="https://raw.githubusercontent.com/rohitna/chatgpt-script/main"
@@ -69,7 +69,7 @@ espanso="package.yml"
 
 
 # destination directory
-dest_dir="$CONFIG/match/packages/openai"
+dest_dir="$ESPANSO_CONFIG_PATH/match/packages/openai"
 
 # create the destination directory if it doesn't exist
 mkdir -p "$dest_dir"
@@ -87,4 +87,12 @@ sed -i '' "s|$old_path|$new_path|g" "$dest_dir/$espanso"
 
 # restart espanso
 espanso restart
+
+# Check if the current shell is zsh
+if [ -n "$ZSH_VERSION" ]; then
+    source ~/.zshrc
+# Otherwise, assume it's bash
+else
+    source ~/.bashrc
+fi
 
