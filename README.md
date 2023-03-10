@@ -2,7 +2,38 @@
 
 This repository maintains a python script that can be used together with [Espanso](https://espanso.org) to interact with chatGPT anywhere from your computer.
 
-## Example usage of the python script without Espanso:
+## Standalone usage of the python script
+
+The script `openai_chatgpt.py` returns the chatGPT chat completion using the prompt from the clipboard and previous prompts from the database as context.
+
+### Options:
+
+| Option                                      | Description                                           | Default Value                |
+| ------------------------------------------- | ----------------------------------------------------- | ----------------------------|
+| `-h, --help`                                | Show help message and exit                            | -                           |
+| `--model MODEL`                             | Model name                                            | `gpt-3.5-turbo`             |
+| `--temperature TEMPERATURE`                 | Temperature value                                     | `1.0`                       |
+| `--system_role SYSTEM_ROLE`                 | System role                                           | `A helpful assistant`           |
+| `--address ADDRESS`                         | API address                                           | `https://api.openai.com/v1/chat/completions` |
+| `--api_key API_KEY`                         | API key                                               | `<Your default key in `config.ini`>` |
+| `--conversation_timeout_minutes CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes  | `15`                        |
+| `--db_file DB_FILE`                         | The chat history database file                        | `~/openai_chatgpt/chats.db` |
+| `--clipboard_action`                        | Action that AI model must perform on the clipboard    | -                           |
+
+### Description:
+
+You can run the script with command-line arguments to override the default configuration values. If you don't pass any command-line arguments, the script will use the default configuration values specified in the `config.ini` file.
+
+### Examples:
+
+Run the script with the default configuration:
+
+```sh
+python openai_chatgpt.py
+```
+
+Run the script with custom configuration:
+
 ```bash
 $ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system_role "A helpful assistant" --address https://my-api-endpoint.com --api_key my-api-key --conversation_timeout_minutes 30 --db_file ~/openai_chatgpt/chats.db --clipboard_action "Explain like I am five"
 ```
