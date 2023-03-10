@@ -21,6 +21,7 @@
 # - `;rephrase`: Rephrase a given text.
 # - `;correct`: Correct grammatical errors in a given text.
 # - `;fact-check`: Check a given fact.
+# - `;rhyme`: Make the given text rhyme.
 
 ## Available **regex based command**
 
