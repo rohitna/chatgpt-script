@@ -48,6 +48,7 @@ mkdir ~/openai_chatgpt
 
 # Create and populate the config.ini file
 cat <<EOF > ~/openai_chatgpt/config.ini
+[default]
 model = gpt-3.5-turbo
 temperature = 1.0
 system_role = A helpful assistant
@@ -58,7 +59,7 @@ db_file = ~/openai_chatgpt/chats.db
 EOF
 
 # Create an Espanso package called openai
-mkdir $ESPANSO_CONFIG_PATH/match/packages/openai
+mkdir "$ESPANSO_CONFIG_PATH/match/packages/openai"
 
 # Repo url
 url="https://raw.githubusercontent.com/rohitna/chatgpt-script/main"
