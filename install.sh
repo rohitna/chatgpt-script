@@ -56,6 +56,7 @@ address = https://api.openai.com/v1/chat/completions
 api_key = REPLACE_WITH_YOUR_OPENAI_API_KEY
 conversation_timeout_minutes = 15
 db_file = ~/openai_chatgpt/chats.db
+allow_clipboard = True
 EOF
 
 # Create an Espanso package called openai
