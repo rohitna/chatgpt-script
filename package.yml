@@ -1,36 +1,4 @@
-## Espanso openai package
-## Query chat-gpt anywhere from your computer
-
-# openai_chatgpt.py usage documentation
-
-## Available **clipboard based commands**
-
-# - `;clear-db`: Clear the chat history database.
-# - `;ask`: Ask a question to ChatGPT.
-# - `;debug`: Debug a code snippet.
-# - `;respond`: Write a response.
-# - `;code`: Write a code snippet with docs and examples.
-# - `;snippet`: Return only the code without explanation (but include code docs).
-# - `;previous-explain`: Explain the previous output in detail with examples.
-# - `;explain`: Explain in detail a given topic or concept.
-# - `;eli5`: Explain a given topic or concept like I'm 5 years old.
-# - `;summarize`: Summarize a given text.
-# - `;write`: Write an article on a given topic.
-# - `;usage`: Generate usage documentation in markdown format.
-# - `;grade`: Grade a given part of an essay on writing skills and suggest improvements.
-# - `;rephrase`: Rephrase a given text.
-# - `;correct`: Correct grammatical errors in a given text.
-# - `;fact-check`: Check a given fact.
-# - `;rhyme`: Make the given text rhyme.
-
-## Available **regex based command**
-
-# - `;q/{query}//`: Ask a query to chatGPT
-
-# ## Usage
-
-# - To use any of the **clipboard based commands**, simply type the trigger phrase after copying your query to the clipboard.
-# - To use the **regex based command**, simply replace `{query}` by your query.
+## Espanso specifications
 
 global_vars:
   - name: "SCRIPT_PATH"
@@ -43,6 +11,8 @@ global_vars:
       cmd: "echo ~/.virtualenvs/openai/bin/python3"
 
 matches:
+
+  ## Utility triggers
   - trigger: ";test-setup"
     replace: "{{output}}"
     vars:
@@ -50,54 +20,6 @@ matches:
         type: shell
         params:
           cmd: "{{PYTHON_ENV}} {{SCRIPT_PATH}} -h"
-
-  - trigger: ";ask"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Answer this please" --system_role "A helpful assistant"'
-
-  - trigger: ";debug"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Debug this code" --system_role "A helpful and wise programmer"'
-
-  - trigger: ";respond"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Write a response to the following" --system_role "A helpful assistant"'
-
-  - trigger: ";code"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Write a code with docs and example for the following" --system_role "A wise and helpful programmer"'
-
-  - trigger: ";snippet"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Return only the code without explanation (but include code docs) for the following" --system_role "A helpful programmer"'
-
-  - trigger: ";previous-explain"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: 'echo -n "" | pbcopy; {{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Explain the previous response in detail with examples" --system_role "A helpful assistant"'
 
   - trigger: ";clear-db"
     replace: "{{output}}"
@@ -107,13 +29,74 @@ matches:
         params:
           cmd: 'rm ~/openai_chatgpt/chats.db'
 
+  - trigger: ";clear-clip"
+    replace: "{{output}}"
+    vars:
+      - name: message
+        type: echo
+        params:
+          echo: "'Clipboard contents cleared'"
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} -c "import pyperclip; pyperclip.copy({{message}})"; echo "Clipboard content were cleared."'
+
+  ## Clipboard triggers
+  - trigger: ";ask"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Answer this please" --system-role "A helpful assistant"'
+
+  - trigger: ";debug"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Debug this code" --system-role "A helpful and wise programmer"'
+
+  - trigger: ";respond"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Write a response to the following" --system-role "A helpful assistant"'
+
+  - trigger: ";code"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Write a code with docs and example for the following" --system-role "A wise and helpful programmer"'
+
+  - trigger: ";snippet"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Return only the code without explanation (but include code docs) for the following" --system-role "A helpful programmer"'
+
+  - trigger: ";previous-explain"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Explain the previous response in detail with examples" --system-role "A helpful assistant" --disallow-clipboard'
+
   - trigger: ";explain"
     replace: "{{output}}"
     vars:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Explain in detail" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Explain in detail" --system-role "A helpful assistant"'
 
   - trigger: ";eli5"
     replace: "{{output}}"
@@ -121,7 +104,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Explain like I am 5" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Explain like I am 5" --system-role "A helpful assistant"'
 
   - trigger: ";summarize"
     replace: "{{output}}"
@@ -129,7 +112,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Summarize" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Summarize" --system-role "A helpful assistant"'
 
   - trigger: ";write"
     replace: "{{output}}"
@@ -137,7 +120,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Write an article on" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Write an article on" --system-role "A helpful assistant"'
 
   - trigger: ";usage"
     replace: "{{output}}"
@@ -145,7 +128,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Generate a usage doc in markdown format" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Generate a usage doc in markdown format" --system-role "A helpful assistant"'
 
 
   - trigger: ";grade"
@@ -154,7 +137,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Grade the following part of an essay on writing skills and suggest improvements" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Grade the following part of an essay on writing skills and suggest improvements" --system-role "A helpful assistant"'
 
   - trigger: ";rephrase"
     replace: "{{output}}"
@@ -162,7 +145,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Rephrase the following" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Rephrase the following" --system-role "A helpful assistant"'
 
   - trigger: ";correct"
     replace: "{{output}}"
@@ -170,7 +153,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Correct grammatical errors in the following" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Correct grammatical errors in the following" --system-role "A helpful assistant"'
 
   # Lower temperature (0.2) used for fact checking.
   - trigger: ";fact-check"
@@ -179,7 +162,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Check this fact" --system_role "A helpful assistant" --temperature 0.2'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Check this fact" --system-role "A helpful assistant" --temperature 0.2'
 
   # Temperature (2.0) used for generating funny messages.
   - trigger: ";make-funny"
@@ -188,7 +171,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: 'echo -n "" | {{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Make this funny" --system_role "A funny poet" --temperature 2.0'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Make this funny" --system-role "A funny poet" --temperature 2.0'
 
   - trigger: ";rhyme"
     replace: "{{output}}"
@@ -196,9 +179,9 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: 'echo -n "" | {{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "Make it rhyme" --system_role "A funny poet"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "Make it rhyme" --system-role "A funny poet"'
 
-  # Regex based openai query
+  # Regex based query
   # Low char limit because of Espanso's 30 character limit on regex.
   - regex: ";q/(?P<query>.*)//"
     replace: "{{output}}"
@@ -206,4 +189,23 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: 'echo -n "" | pbcopy; {{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard_action "{{query}}" --system_role "A helpful assistant"'
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "{{query}}" --system-role "A helpful assistant" --disallow-clipboard'
+
+  # Form based query
+  - regex: ";form"
+    replace: "{{output}}"
+    vars:
+      - name: "query_form"
+        type: form
+        params:
+          layout: |
+            Prompt:
+            [[prompt]]
+            This will be sent to chatGPT.
+          fields:
+            prompt:
+              multiline: true
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "{{query_form.prompt}}" --system-role "A helpful assistant" --disallow-clipboard'

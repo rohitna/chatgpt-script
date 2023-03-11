@@ -9,13 +9,14 @@ Options:
   -h, --help                                   Show this help message and exit
   --model MODEL                                Model name [default: gpt-3.5-turbo]
   --temperature TEMPERATURE                    Temperature value [default: 1.0]
-  --system_role SYSTEM_ROLE                    System role [default: A wise chat bot]
+  --system-role SYSTEM_ROLE                    System role [default: A wise chat bot]
   --address ADDRESS                            API address [default: https://api.openai.com/v1/chat/completions]
-  --api_key API_KEY                            API key [default: <Your default key in `config.ini`>]
-  --conversation_timeout_minutes CONVERSATION_TIMEOUT_MINUTES
+  --api-key API_KEY                            API key [default: <Your default key in `config.ini`>]
+  --conversation-timeout-minutes CONVERSATION_TIMEOUT_MINUTES
                                                Conversation timeout in minutes [default: 15]
-  --db_file DB_FILE                            The chat history database file [default: ~/openai_chatgpt/chats.db]
-  --clipboard_action                           Action that AI model must perform on the clipboard
+  --db-file DB_FILE                            The chat history database file [default: ~/openai_chatgpt/chats.db]
+  --clipboard-action CLIPBOARD_ACTIO           Action that AI model must perform on the clipboard
+  --allow-clipboard                            Allow clipboard content to be sent to OpenAI [default: True]
 
 Description:
   This script returns the chatGPT chat completion using the prompt from the clipboard and previous prompts from the database as context. The chatbot uses the OpenAI API to generate text responses to user messages.
@@ -24,12 +25,13 @@ Description:
 
   --model: The name of the GPT model to use.
   --temperature: The temperature value to use.
-  --system_role: The role of the system in the conversation.
+  --system-role: The role of the system in the conversation.
   --address: The URL of the API endpoint.
-  --api_key: The API key to use.
-  --conversation_timeout_minutes: The conversation timeout in minutes.
-  --db_file: The chat history database file path.
-  --clipboard_action: What should the AI do with the clipboard content. Explain it?
+  --api-key: The API key to use.
+  --conversation-timeout-minutes: The conversation timeout in minutes.
+  --db-file: The chat history database file path.
+  --clipboard-action: What should the AI do with the clipboard content. Explain it?
+  --allow-clipboard: Allow clipboard content to be sent to OpenAI.
 
   If you don't pass any command-line arguments, the script will use the default configuration values specified in the config.ini file. The config file `config.ini` should be stored at '~/openai_chatgpt/config.ini'
 
@@ -38,7 +40,7 @@ Examples:
   $ python script.py
 
   Run the script with custom configuration:
-  $ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system_role "Funny poet" --address https://my-api-endpoint.com --api_key my-api-key --conversation_timeout_minutes 30 --db_file ~/openai_chatgpt/chats.db --clipboard_action "Explain like I am five"
+  $ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system-role "Funny poet" --address https://my-api-endpoint.com --api-key my-api-key --conversation-timeout-minutes 30 --db-file ~/openai_chatgpt/chats.db --clipboard-action "Explain like I am five" --allow-clipboard
 """
 
 #!/usr/bin/python
@@ -69,6 +71,25 @@ def get_clipboard_content() -> str:
         str: The contents of the clipboard.
     """
     return pyperclip.paste()
+
+
+def clear_clipboard():
+    """
+    A function to clear the contents of the clipboard.
+    """
+
+    # Get the current contents of the clipboard
+    current_clipboard = pyperclip.paste()
+
+    # Clear the clipboard by setting its contents to an empty string
+    pyperclip.copy("")
+
+    # Overwrite the contents of the clipboard with random data
+    # This is done to prevent any data recovery
+    pyperclip.copy(" ".join(["X" * 10] * 100))
+
+    # Clear the clipboard again
+    pyperclip.copy("")
 
 
 def encode_base64(string: str) -> str:
@@ -232,6 +253,7 @@ def run_chatgpt(
     conversation_timeout_minutes: int,
     db_file: str,
     clipboard_action: str,
+    allow_clipboard: bool,
 ):
     """
     - Prints the response from chatGPT to the clipboard prompt.
@@ -246,9 +268,13 @@ def run_chatgpt(
         conversation_timeout_minutes (int): Time cutoff to decide how many previous conversations to send to the AI model for context.
         db_file (str): Chat history database file.
         clipboard_action (str): Action to perform on the clipboard.
+        allow_clipboard (bool): Allow clipboard content to be sent to OpenAI
     """
     # Set up database
     set_up_database(db_file)
+
+    if not allow_clipboard:
+        clear_clipboard()
 
     # Get the new prompt from the clipboard
     clipboard_content = get_clipboard_content()
@@ -267,9 +293,16 @@ def run_chatgpt(
 
     # Create json request
     timestamp_cutoff = timestamp_n_minutes_ago(conversation_timeout_minutes)
-    messages = [{"role": "system", "content": system_role}] + \
-           [{"role": role, "content": content} for role, content in zip(*get_conversations_after_timestamp(timestamp_cutoff, db_file))] + \
-           [{"role": "user", "content": new_prompt}]
+    messages = (
+        [{"role": "system", "content": system_role}]
+        + [
+            {"role": role, "content": content}
+            for role, content in zip(
+                *get_conversations_after_timestamp(timestamp_cutoff, db_file)
+            )
+        ]
+        + [{"role": "user", "content": new_prompt}]
+    )
     logger.info(f"Messages to be sent to the AI model: {messages}")
 
     data = {"model": model, "temperature": temperature, "messages": messages}
@@ -309,6 +342,7 @@ def read_config(config_file):
             "default", "conversation_timeout_minutes"
         ),
         "db_file": config.get("default", "db_file"),
+        "allow_clipboard": config.getboolean("default", "allow_clipboard"),
     }
 
 
@@ -325,24 +359,36 @@ def parse_args():
     parser.add_argument(
         "--temperature", type=float, default=None, help="Temperature value"
     )
-    parser.add_argument("--system_role", default=None, help="System role")
+    parser.add_argument("--system-role", default=None, help="System role")
     parser.add_argument("--address", default=None, help="API address")
-    parser.add_argument("--api_key", default=None, help="API key")
+    parser.add_argument("--api-key", default=None, help="API key")
     parser.add_argument(
-        "--conversation_timeout_minutes",
+        "--conversation-timeout-minutes",
         type=int,
         default=None,
         help="Conversation timeout in minutes",
     )
     parser.add_argument(
-        "--db_file",
+        "--db-file",
         default=None,
         help="Path to the chat history database file",
     )
     parser.add_argument(
-        "--clipboard_action",
+        "--clipboard-action",
         default="",
         help="What should the AI do with the clipboard content. Explain it?",
+    )
+    parser.add_argument(
+        "--allow-clipboard",
+        action="store_true",
+        help="Allow clipboard content to be sent to openAI",
+        default=True,
+    )
+    parser.add_argument(
+        "--disallow-clipboard",
+        dest="allow_clipboard",
+        action="store_false",
+        help="Disallow clipboard content to be sent to openAI",
     )
     return parser.parse_args()
 
@@ -356,6 +402,7 @@ def configure_logging():
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[logging.StreamHandler()],
     )
+
 
 def expand_file_path(file_path: str) -> str:
     """
