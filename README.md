@@ -19,7 +19,8 @@ The script `openai_chatgpt.py` returns the chatGPT chat completion using the pro
 | `--conversation-timeout-minutes CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes  | `15`                        |
 | `--db-file DB_FILE`                         | The chat history database file                        | `~/openai_chatgpt/chats.db` |
 | `--clipboard-action CLIPBOARD_ACTION`       | Action that AI model must perform on the clipboard    | -                           |
-| `--allow-clipboard`                         | Allow clipboard content to be sent to openAI          | `True`
+| `--allow-clipboard`                         | Allow clipboard content to be sent to openAI          | `True (set)`
+| `--disallow-clipboard` | Disallow clipboard content to be sent to OpenAI | `False (not set)`
 
 ### Description:
 
