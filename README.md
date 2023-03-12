@@ -93,6 +93,22 @@ Command | Description
 `;clear-clip` | Clear clipboard content.
 `;test-setup` | Test setup.
 
+## Protecting Sensitive Information on the Clipboard
+
+It is important to be aware that the contents of your clipboard can be shared among apps, which can pose a serious security risk to your passwords, credit card numbers, or other confidential information.
+
+When you copy sensitive data to your clipboard, it remains there until it is overwritten by new content. If you do not clear your clipboard after use, any app or program that accesses your clipboard can potentially access and share your sensitive information. In fact, the functionality provided by this repo serves as an example of how this is possible - the clipboard based triggers mentioned above send your clipboard contents to OpenAI.
+
+To prevent this from happening, it is recommended that you always clear your clipboard after copying sensitive information. You can do this either by using the provided trigger `;clear-clip`, or by using a clipboard management tool that can automatically clear your clipboard.
+
+Protect your information by taking proactive steps to secure your clipboard contents. Please be aware of the potential security risks associated with leaving sensitive data in your clipboard.
+
+If you are unsure about how to ensure the safety of your clipboard content, after installation, please comment out all the clipboard based trigger specifications in the `package.yml` file:
+
+```
+cd "$(espanso path config)/match/packages/openai/"
+```
+
 ## Installation instructions (as an Espanso package):
 
 ### Prerequisites
