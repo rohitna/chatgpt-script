@@ -192,7 +192,7 @@ matches:
           cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "{{query}}" --system-role "A helpful assistant" --disallow-clipboard'
 
   # Form based query
-  - regex: ";form"
+  - trigger: ";form"
     replace: "{{output}}"
     vars:
       - name: "query_form"
@@ -209,3 +209,39 @@ matches:
         type: shell
         params:
           cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "{{query_form.prompt}}" --system-role "A helpful assistant" --disallow-clipboard'
+
+  - trigger: ";clip-form"
+    replace: "{{output}}"
+    vars:
+      - name: "query_form"
+        type: form
+        params:
+          layout: |
+            Prompt:
+            [[prompt]]
+            This will be sent to chatGPT.
+          fields:
+            prompt:
+              multiline: true
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --clipboard-action "{{query_form.prompt}}" --system-role "A helpful assistant"'
+
+  # Sound based query
+  - trigger: ";talk"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --record --record-duration 10 --disallow-clipboard'
+
+  # Sound based query
+  - trigger: ";clip-talk"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: '{{PYTHON_ENV}} {{SCRIPT_PATH}} --record --record-duration 10'
