@@ -21,12 +21,12 @@ The script `openai_chatgpt.py` returns the chatGPT chat completion using the pro
 | `--clipboard-action CLIPBOARD_ACTION`       | Action that AI model must perform on the clipboard    | -                           |
 | `--allow-clipboard`                         | Allow clipboard content to be sent to openAI          | `True (set)`                |
 | `--disallow-clipboard`                      | Disallow clipboard content to be sent to OpenAI       | `False (not set)`           |
-| `--transcription-model TRANSCRIPTION_MODEL` | OpenAI model to use for transcriptions                | `davinci`                   |
+| `--transcription-model TRANSCRIPTION_MODEL` | OpenAI model to use for transcriptions                | `whisper-1`                 |
 | `--record-duration RECORD_DURATION`         | Recording duration for transcription                  | `10 seconds`                |
 | `--record`                                  | Allow microphone recording and transcribing of actions to perform | `False (not set)` |
 | `--no-recording`                            | Do not allow microphone recording                      | `True (set)`                |
-| `--recording-path RECORDING_PATH`           | Path to the microphone recording .wav file             | `./recording.wav`           |
-| `--sound-effect SOUND_EFFECT`               | Path to the sound effect .wav file                     | -                           |
+| `--recording-path RECORDING_PATH`           | Path to the microphone recording .wav file             | `~/openai_chatgpt/prompt.wav`           |
+| `--sound-effect SOUND_EFFECT`               | Path to the sound effect .wav file                     | `~/openai_chatgpt/bell.wav`                           |
 
 ### Description:
 
