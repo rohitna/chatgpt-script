@@ -45,12 +45,12 @@ ESPANSO_CONFIG_PATH="$(espanso path config)"
 if [ -n "$ZSH_VERSION" ]; then
     echo "Detected zsh shell"
     # Add espanso path to .zshrc
-    echo "export ESPANSO_CONFIG=\"$ESPANSO_CONFIG_PATH\"" >> ~/.zshrc
+    echo "export CONFIG=\"$ESPANSO_CONFIG_PATH\"" >> ~/.zshrc
 # Otherwise, assume it's bash
 else
     echo "Detected bash shell"
     # Add espanso path to .bashrc file
-    echo "export ESPANSO_CONFIG=\"$ESPANSO_CONFIG_PATH\"" >> ~/.bashrc
+    echo "export CONFIG=\"$ESPANSO_CONFIG_PATH\"" >> ~/.bashrc
 fi
 
 # Create the openai_chatgpt folder in the home directory

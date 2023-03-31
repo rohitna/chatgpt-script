@@ -4,7 +4,7 @@ global_vars:
   - name: "SCRIPT_PATH"
     type: "echo"
     params:
-      echo: "\"$ESPANSO_CONFIG/match/packages/openai/openai_chatgpt.py\""
+      echo: "\"$CONFIG/match/packages/openai/openai_chatgpt.py\""
   - name: "PYTHON_ENV"
     type: "shell"
     params:
