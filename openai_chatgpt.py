@@ -1,49 +1,7 @@
-__version__ = "1.0"
-__date__ = "2022-03-06"
-
-"""
-Usage:
-  openai_chatgpt.py [options]
-
-Options:
-  -h, --help                                   Show this help message and exit
-  --model MODEL                                Model name [default: gpt-3.5-turbo]
-  --temperature TEMPERATURE                    Temperature value [default: 1.0]
-  --system-role SYSTEM_ROLE                    System role [default: A wise chat bot]
-  --address ADDRESS                            API address [default: https://api.openai.com/v1/chat/completions]
-  --api-key API_KEY                            API key [default: <Your default key in `config.ini`>]
-  --conversation-timeout-minutes CONVERSATION_TIMEOUT_MINUTES
-                                               Conversation timeout in minutes [default: 15]
-  --db-file DB_FILE                            The chat history database file [default: ~/openai_chatgpt/chats.db]
-  --clipboard-action CLIPBOARD_ACTIO           Action that AI model must perform on the clipboard
-  --allow-clipboard                            Allow clipboard content to be sent to OpenAI [default: True]
-
-Description:
-  This script returns the chatGPT chat completion using the prompt from the clipboard and previous prompts from the database as context. The chatbot uses the OpenAI API to generate text responses to user messages.
-
-  You can run the script with command-line arguments to override the default configuration values. The available command-line arguments are:
-
-  --model: The name of the GPT model to use.
-  --temperature: The temperature value to use.
-  --system-role: The role of the system in the conversation.
-  --address: The URL of the API endpoint.
-  --api-key: The API key to use.
-  --conversation-timeout-minutes: The conversation timeout in minutes.
-  --db-file: The chat history database file path.
-  --clipboard-action: What should the AI do with the clipboard content. Explain it?
-  --allow-clipboard: Allow clipboard content to be sent to OpenAI.
-
-  If you don't pass any command-line arguments, the script will use the default configuration values specified in the config.ini file. The config file `config.ini` should be stored at '~/openai_chatgpt/config.ini'
-
-Examples:
-  Run the script with the default configuration:
-  $ python script.py
-
-  Run the script with custom configuration:
-  $ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system-role "Funny poet" --address https://my-api-endpoint.com --api-key my-api-key --conversation-timeout-minutes 30 --db-file ~/openai_chatgpt/chats.db --clipboard-action "Explain like I am five" --allow-clipboard
-"""
-
 #!/usr/bin/python
+
+__version__ = "1.1" # talking to chatGPT enabled
+__date__ = "2022-03-31"
 
 import json
 import sys
@@ -57,11 +15,24 @@ import datetime
 import configparser
 import argparse
 import logging
+import struct
+import wave
+import openai
+from pvrecorder import PvRecorder
 from typing import List, Tuple
 from pprint import pprint
 
-logger = logging.getLogger("openai_chatgpt.py")
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+import pygame
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - [%(levelname)s]: %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
 
 def get_clipboard_content() -> str:
     """
@@ -91,6 +62,69 @@ def clear_clipboard():
     # Clear the clipboard again
     pyperclip.copy("")
 
+def play_sound_effect(sound_effect: str):
+    # Initialize Pygame
+    pygame.mixer.init()
+
+    # Load the sound effect WAV file
+    pygame.mixer.music.load(sound_effect)
+
+    # Play the sound effect
+    pygame.mixer.music.set_volume(0.15)
+    pygame.mixer.music.play()
+
+    # Wait for the sound to finish playing
+    while pygame.mixer.music.get_busy():
+        pass
+
+    pygame.mixer.quit()
+
+def record_from_microphone(device_index: int, output_file: str, seconds: int, sound_effect: str):
+    """
+    Records audio from a specified device index for a specified duration of time and saves it to a WAV file.
+
+    Args:
+        device_index (int): Index of the input device to be used for recording.
+        output_file (str): File name (including path) of the WAV file to save the recording to.
+        seconds (int): Duration of the recording in seconds.
+        sound_effect (str): Path to the sounds effect file.
+    """
+    recorder = PvRecorder(device_index=device_index, frame_length=512)
+    start_time = time.time()
+
+    # Start recording
+    play_sound_effect(sound_effect)
+    logger.info("Recording is starting now..")
+    recorder.start()
+
+    # Create a WAV file for the recording and set its parameters
+    wav_file = wave.open(output_file, "w")
+    wav_file.setparams((1, 2, 16000, 512, "NONE", "NONE"))
+
+    # Record audio in a loop until the specified duration is reached or the user interrupts
+    try:
+        while True:
+            # Read a chunk of audio data from the input stream
+            pcm = recorder.read()
+
+            # Write the audio data to the WAV file
+            wav_file.writeframes(struct.pack("h" * len(pcm), *pcm))
+
+            # break the loop if the max duration has elapsed
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            if elapsed_time >= seconds:
+                break
+    except KeyboardInterrupt:
+        logger.info("Early stopping prompted by the user.")
+    finally:
+        # Stop the recording and close the WAV file
+        recorder.stop()
+        recorder.delete()
+        wav_file.close()
+        play_sound_effect(sound_effect)
+
+    logger.info(f"Recording saved to {output_file}")
 
 def encode_base64(string: str) -> str:
     """
@@ -148,6 +182,7 @@ def set_up_database(db_file: str) -> None:
     Args:
         db_file (str): The chat histor database file.
     """
+    logger.info(f"Database file is {db_file}")
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
     cursor.execute(
@@ -216,6 +251,24 @@ def send_request(json_data: str, address: str, api_key: str) -> dict:
     # Return the response
     return json.loads(response.text, strict=False)
 
+def transcribe(wav_file: str, api_key: str, transcription_model: str) -> str:
+    """
+    Transcribes an audio file using OpenAI's transcription API.
+
+    Args:
+    wav_file (str): The path to the input WAV file.
+    api_key (str): OpenAI api key.
+    transcription_model (str): OpenAI transcription model to use.
+
+    Returns:
+    str: The transcribed text from the audio file.
+    """
+    f = open(wav_file, "rb")
+    openai.api_key = api_key
+    transcript = openai.Audio.transcribe(transcription_model, f)
+    parsed = json.loads(str(transcript))
+    decoded_text = parsed['text'].encode().decode('unicode_escape')
+    return decoded_text
 
 def get_conversations_after_timestamp(
     timestamp: int, db_file: str
@@ -254,6 +307,11 @@ def run_chatgpt(
     db_file: str,
     clipboard_action: str,
     allow_clipboard: bool,
+    transcription_model: str,
+    record_duration: int,
+    record: bool,
+    recording_path: str,
+    sound_effect: str,
 ):
     """
     - Prints the response from chatGPT to the clipboard prompt.
@@ -268,7 +326,12 @@ def run_chatgpt(
         conversation_timeout_minutes (int): Time cutoff to decide how many previous conversations to send to the AI model for context.
         db_file (str): Chat history database file.
         clipboard_action (str): Action to perform on the clipboard.
-        allow_clipboard (bool): Allow clipboard content to be sent to OpenAI
+        allow_clipboard (bool): Allow clipboard content to be sent to OpenAI.
+        transcription_model (str): OpenAI model to use for transcriptions.
+        record_duration (int): Recording duration for transcription.
+        record (bool): Allow microphone recording and transcribing of actions to perform.
+        recording_path (str): Path to the microphone recording .wav file.
+        sound_effect (str): Path to the sound effect .wav file.
     """
     # Set up database
     set_up_database(db_file)
@@ -278,6 +341,23 @@ def run_chatgpt(
 
     # Get the new prompt from the clipboard
     clipboard_content = get_clipboard_content()
+
+    # If record feature is on, record the action to perform.
+    if record:
+        record_from_microphone(
+            -1,
+            recording_path,
+            record_duration,
+            sound_effect,
+        )
+        clipboard_action = transcribe(
+            recording_path,
+            api_key,
+            transcription_model,
+        )
+        logger.info(f"Transcribed action to perform: {clipboard_action}")
+        # print(f"Transcribed action to perform: {clipboard_action}")
+
 
     # Modify the prompt according to the desired clipboard action
     if not clipboard_content and not clipboard_action:
@@ -343,6 +423,11 @@ def read_config(config_file):
         ),
         "db_file": config.get("default", "db_file"),
         "allow_clipboard": config.getboolean("default", "allow_clipboard"),
+        "transcription_model": config.get("default", "transcription_model"),
+        "record_duration": config.getint("default", "record_duration"),
+        "record": config.getboolean("default", "record"),
+        "recording_path": config.get("default", "recording_path"),
+        "sound_effect": config.get("default", "sound_effect")
     }
 
 
@@ -390,19 +475,37 @@ def parse_args():
         action="store_false",
         help="Disallow clipboard content to be sent to openAI",
     )
-    return parser.parse_args()
-
-
-def configure_logging():
-    """
-    Configures the logging system.
-    """
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()],
+    parser.add_argument(
+        "--transcription-model",
+        default=None,
+        help="OpenAI model to use for transcriptions",
     )
-
+    parser.add_argument(
+        "--record-duration", type=int, default=None, help="Recording duration for transcription"
+    )
+    parser.add_argument(
+        "--record",
+        action="store_true",
+        help="Allow microphone recording and transcribing of actions to perform",
+        default=False,
+    )
+    parser.add_argument(
+        "--no-recording",
+        dest="record",
+        action="store_false",
+        help="Do not allow microphone recording",
+    )
+    parser.add_argument(
+        "--recording-path",
+        default=None,
+        help="Path to the microphone recording .wav file",
+    )
+    parser.add_argument(
+        "--sound-effect",
+        default=None,
+        help="Path to the sound effect .wav file",
+    )
+    return parser.parse_args()
 
 def expand_file_path(file_path: str) -> str:
     """
@@ -443,8 +546,10 @@ def main():
             config[key] = value
 
     config["db_file"] = expand_file_path(config["db_file"])
+    config["recording_path"] = expand_file_path(config["recording_path"])
+    config["sound_effect"] = expand_file_path(config["sound_effect"])
 
-    configure_logging()
+    # logger.info(f"Config is: {config}")
 
     run_chatgpt(**config)
 

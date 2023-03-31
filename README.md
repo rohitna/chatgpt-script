@@ -19,8 +19,14 @@ The script `openai_chatgpt.py` returns the chatGPT chat completion using the pro
 | `--conversation-timeout-minutes CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes  | `15`                        |
 | `--db-file DB_FILE`                         | The chat history database file                        | `~/openai_chatgpt/chats.db` |
 | `--clipboard-action CLIPBOARD_ACTION`       | Action that AI model must perform on the clipboard    | -                           |
-| `--allow-clipboard`                         | Allow clipboard content to be sent to openAI          | `True (set)`
-| `--disallow-clipboard` | Disallow clipboard content to be sent to OpenAI | `False (not set)`
+| `--allow-clipboard`                         | Allow clipboard content to be sent to openAI          | `True (set)`                |
+| `--disallow-clipboard`                      | Disallow clipboard content to be sent to OpenAI       | `False (not set)`           |
+| `--transcription-model TRANSCRIPTION_MODEL` | OpenAI model to use for transcriptions                | `davinci`                   |
+| `--record-duration RECORD_DURATION`         | Recording duration for transcription                  | `10 seconds`                |
+| `--record`                                  | Allow microphone recording and transcribing of actions to perform | `False (not set)` |
+| `--no-recording`                            | Do not allow microphone recording                      | `True (set)`                |
+| `--recording-path RECORDING_PATH`           | Path to the microphone recording .wav file             | `./recording.wav`           |
+| `--sound-effect SOUND_EFFECT`               | Path to the sound effect .wav file                     | -                           |
 
 ### Description:
 
@@ -28,19 +34,28 @@ You can run the script with command-line arguments to override the default confi
 
 ### Examples:
 
-Run the script with the default configuration:
+1. Run the script with the default configuration:
 
-```sh
-python openai_chatgpt.py
-```
+    ```sh
+    python openai_chatgpt.py
+    ```
 
-Run the script with custom configuration:
+2. Run the script with custom configuration:
 
-```bash
-$ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system-role "A helpful assistant" --address https://my-api-endpoint.com --api-key my-api-key --conversation-timeout-minutes 30 --db-file ~/openai_chatgpt/chats.db --clipboard-action "Explain like I am five" --allow-clipboard
-```
+    ```bash
+    $ python openai_chatgpt.py --model gpt-3.5-turbo --temperature 0.5 --system-role "A helpful assistant" --address https://my-api-endpoint.com --api-key my-api-key --conversation-timeout-minutes 30 --db-file ~/openai_chatgpt/chats.db --clipboard-action "Explain like I am five" --allow-clipboard
+    ```
 
-This command prompts chatGPT to clarify whatever text you've copied onto your clipboard in a way that a 5-year-old can understand. ChatGPT here assumes the role of "a helpful assistant", leverage your prior 30 minutes of interaction with it to provide relevant context, and crafts its response with a randomness of 0.5 on a scale of 0 to 2.0.
+    This command prompts chatGPT to clarify whatever text you have copied onto your clipboard in a way that a 5-year-old can understand. ChatGPT here assumes the role of "a helpful assistant", leverage your prior 30 minutes of interaction with it to provide relevant context, and crafts its response with a randomness of 0.5 on a scale of 0 to 2.0.
+
+3. Talk to chatGPT:
+
+    ```bash
+    $ python openai_chatgpt.py --record
+    ```
+
+    This command will record the action you would like to perform on the text you have copied onto your clipboard and prompt chatGPT for a response.
+
 
 ## Usage as an Espanso package
 ### Clipboard Based Triggers
@@ -78,13 +93,24 @@ To use this command, replace `{query}` with your query in the `;q/{query}//` com
 
 
 ### Form Based Triggers
-In addition to the clipboard and regex based triggers, there is one form based trigger available:
+There are a few form based trigger available:
 
 Command | Description
 --- | ---
 `;form` | Ask a query to ChatGPT.
+`;clip-form` | Tell ChatGPT the action you would like to perform on the clipboard.
 
-To use this command, enter the trigger `;form`. This will open up a form where you can enter your query and submit it.
+To use these command, enter one of the triggers: `;form` or `;clip-form`. This will open up a form where you can enter your query and submit it.
+
+### Microphone based triggers
+In addition to the clipboard, regex, and based triggers, the following microphone based triggers are available. (These require that you grant microphone access to Espanso which could be tricky especially on a Mac; see FAQs below.):
+
+Command | Description
+--- | ---
+`;talk` | Ask a query to ChatGPT.
+`;clip-talk` | Tell ChatGPT the action you would like to perform on the clipboard.
+
+To use these command, enter one of the triggers: `;talk` or `;clip-talk`. You will hear a bell, after which, you can record your query or clibboard action for the following ten seconds (before the second bell). The record duration is customizable.
 
 ### Other Useful Triggers
 
@@ -135,3 +161,57 @@ cd "$(espanso path config)/match/packages/openai/"
 3. Once the installation is complete, store your OpenAI API key in `~/openai_chatgpt/config.ini`.
 
 4. That's it, happy chatting with ChatGPT!
+
+
+## FAQs
+
+1. How do I grant Espanso access to microphone on a Mac?
+
+    This could be very tricky on newer versions of MacOS. Here are full instructions:
+    - Check if the SIP (System Integrity Protection) is disabled by running `csrutil status`. If it is enabled then you will need to disable it; see FAQ #2 below.
+    - Get the bundle identifier for Espanso using the following command:
+    ```bash
+    mdls -name kMDItemCFBundleIdentifier /Applications/Espanso.app
+    ```
+    You should see something like `com.federicoterzi.espanso`.
+    - The TCC (Transparency, Consent, and Control) database is a security feature on macOS that stores information about which applications are authorized to access certain sensitive resources, such as the camera, microphone, location services, and more. Enter into the TCC database by using the following command:
+    ```bash
+    sudo sqlite3 ~/Library/Application\ Support/com.apple.TCC/TCC.db
+    ```
+    You will be prompted for you mac password. You can now see how authorizations you have given so far to your applications by running:
+    ```bash
+    select * from access;
+    ```
+    - Grant microphone access to Espanso by running the following in the TCC database:
+    ```sqlite
+    insert into access
+    values
+    ('kTCCServiceMicrophone','com.federicoterzi.espanso', 0, 2, 2, 1, null, null, null, 'UNUSED', null, 0, 1671466672);
+    ```
+    - Verify that the permission has been successfully granted.
+      - Click on the Apple menu in the top left corner of your screen and select "System Preferences".
+      - Click on the "Security & Privacy" icon.
+      - Click on the "Privacy" tab.
+      - In the left sidebar, select "Microphone".
+      - Verify that Espanso is listed as an authorized app.
+   -  Re-enable SIP; see FAQ #3.
+
+2. How do I disable SIP (System Integrity Protection) on a Mac?
+
+    - Shut down your Mac.
+    - Restart your Mac in recovery mode. To do this, hold down the `Command + R` keys while your Mac starts up.
+    - Once your Mac is in recovery mode, click on the Utilities menu in the top menu bar and select Terminal.
+    - In the Terminal window, type the following command: `csrutil disable`.
+    - Press `Enter` on your keyboard.
+    - Restart your Mac normally.
+    - After disabling SIP, you will have full access to system files and can make changes to them.
+
+    However, it is important to note that disabling SIP can potentially make your Mac more vulnerable to malware and other security threats. Therefore, it is recommended that you re-enable SIP after you have completed your task that requires SIP to be disabled.
+
+3. How do I re-enable SIP on a Mac?
+ - Restart your Mac in Recovery mode by holding down the Command + R keys while your Mac is starting up.
+ - When the macOS Utilities window appears, click on the "Utilities" menu and select "Terminal".
+ - In the Terminal window, type the following command: csrutil enable.
+ - Press enter and then restart your Mac normally.
+
+    After your Mac restarts, SIP will be enabled again. Verify this by using `csrutil status`.
