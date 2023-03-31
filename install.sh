@@ -92,7 +92,7 @@ mkdir -p "$dest_dir"
 # download the files using curl
 curl -L -o "$dest_dir/$script" "$url/$script"
 curl -L -o "$dest_dir/$espanso" "$url/$espanso"
-curl -L -o "~/openai_chatgpt/$sound_effect" "$url/$sound_effect"
+curl -L -o "$HOME/openai_chatgpt/$sound_effect" "$url/$sound_effect"
 
 # Get the path to the Python executable
 python_path=$(which python3)
