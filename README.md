@@ -182,11 +182,17 @@ cd "$(espanso path config)/match/packages/openai/"
     ```bash
     select * from access;
     ```
-    - Grant microphone access to Espanso by running the following in the TCC database:
+    - Grant microphone access to Espanso by running the following in the TCC database (the exact command may depend on the OS version):
     ```sqlite
     insert into access
     values
     ('kTCCServiceMicrophone','com.federicoterzi.espanso', 0, 2, 2, 1, null, null, null, 'UNUSED', null, 0, 1671466672);
+    ```
+    If the access table has 17 columns you may want to try:
+    ```sqlite
+    insert into access
+    valuses
+    ('kTCCServiceMicrophone','com.federicoterzi.espanso', 0, 2, 2, 1, null, null, null, 'UNUSED', null, 0, 1671466672, null, null, 'UNUSED', 0);
     ```
     - Verify that the permission has been successfully granted.
       - Click on the Apple menu in the top left corner of your screen and select "System Preferences".
