@@ -141,7 +141,7 @@ cd "$(espanso path config)/match/packages/openai/"
 ### Prerequisites
 - Make sure you have Espanso installed on your system. If not, follow these [instructions](https://espanso.org/install/) to install it.
 
-- Install `python3` if it's not already installed. If you'd like, create a new python environment - the installation script adds new python packages, namely `pyperclip` and `requests` to the current python environment.
+- Install `python3` if it's not already installed. If you'd like, create and activate a new python environment in the shell - the installation script adds new python packages, namely `pyperclip` and `requests` to the current python environment.
 
 - Create an account with [OpenAI](https://openai.com/) and generate an API key.
 
